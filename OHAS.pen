@@ -1839,7 +1839,7 @@
                   "id": "Gih9z",
                   "type": "ref",
                   "ref": "L73ds",
-                  "x": 140,
+                  "x": 141,
                   "y": 40,
                   "descendants": {
                     "2Pl0N": {
@@ -1959,7 +1959,7 @@
               "id": "3Xrrm",
               "type": "ref",
               "ref": "H2eCV",
-              "x": 145,
+              "x": 143,
               "y": 8,
               "descendants": {
                 "lsCeq": {
@@ -1973,7 +1973,7 @@
               "id": "xqcvU",
               "type": "ref",
               "ref": "H2eCV",
-              "x": 242,
+              "x": 239,
               "y": 8,
               "descendants": {
                 "lsCeq": {
@@ -1987,7 +1987,7 @@
               "id": "claME",
               "type": "ref",
               "ref": "H2eCV",
-              "x": 341,
+              "x": 338,
               "y": 8,
               "descendants": {
                 "lsCeq": {
@@ -2566,7 +2566,7 @@
               "id": "Rnr6z",
               "type": "ref",
               "ref": "L73ds",
-              "x": 148,
+              "x": 147,
               "y": 0,
               "descendants": {
                 "2Pl0N": {
@@ -2886,7 +2886,7 @@
                   "id": "9Novc",
                   "type": "ref",
                   "ref": "2bkgE",
-                  "x": 289,
+                  "x": 301,
                   "y": 44,
                   "descendants": {
                     "1qRIv": {
@@ -3474,7 +3474,7 @@
               "id": "JOgSp",
               "type": "ref",
               "ref": "PoWVd",
-              "x": 901,
+              "x": 902,
               "y": 0,
               "name": "Button/Large/Outline",
               "fill": [],
@@ -3709,7 +3709,7 @@
                   "id": "dtBtn1",
                   "type": "ref",
                   "ref": "PoWVd",
-                  "x": 901,
+                  "x": 902,
                   "y": 0
                 }
               ]
@@ -4113,13 +4113,13 @@
                       "height": 13,
                       "icon": "circle-alert",
                       "library": "lucide",
-                      "fill": "#ef4444"
+                      "fill": "$ohas-risk-high"
                     },
                     {
                       "type": "text",
                       "id": "zjQZl",
                       "name": "Error Text",
-                      "fill": "#ef4444",
+                      "fill": "$ohas-risk-high",
                       "content": "Password must be at least 8 characters",
                       "fontFamily": "$ohas-font-body",
                       "fontSize": 12,
@@ -4616,13 +4616,13 @@
                       "height": 13,
                       "icon": "circle-alert",
                       "library": "lucide",
-                      "fill": "#ef4444"
+                      "fill": "$ohas-risk-high"
                     },
                     {
                       "type": "text",
                       "id": "XVs8y",
                       "name": "Error Text",
-                      "fill": "#ef4444",
+                      "fill": "$ohas-risk-high",
                       "content": "Password must be at least 8 characters",
                       "fontFamily": "$ohas-font-body",
                       "fontSize": 12,
@@ -7254,7 +7254,7 @@
                           "name": "Icon Circle",
                           "width": 36,
                           "height": 36,
-                          "fill": "#7f1d1d",
+                          "fill": "$ohas-risk-high-bg",
                           "cornerRadius": 999,
                           "justifyContent": "center",
                           "alignItems": "center",
@@ -7267,7 +7267,7 @@
                               "height": 17,
                               "icon": "triangle-alert",
                               "library": "lucide",
-                              "fill": "#ef4444"
+                              "fill": "$ohas-risk-high"
                             }
                           ]
                         },
@@ -7287,7 +7287,7 @@
                               "type": "frame",
                               "id": "fRIR0",
                               "name": "Urgency Tag",
-                              "fill": "#7f1d1d",
+                              "fill": "$ohas-risk-high-bg",
                               "cornerRadius": 6,
                               "padding": [
                                 4,
@@ -7300,7 +7300,7 @@
                                   "type": "text",
                                   "id": "lVrmq",
                                   "name": "Tag Text",
-                                  "fill": "#ef4444",
+                                  "fill": "$ohas-risk-high",
                                   "content": "URGENT",
                                   "fontFamily": "$ohas-font-body",
                                   "fontSize": 11,
@@ -7370,7 +7370,7 @@
                           "name": "Icon Circle",
                           "width": 36,
                           "height": 36,
-                          "fill": "#78350f",
+                          "fill": "$ohas-risk-medium-bg",
                           "cornerRadius": 999,
                           "justifyContent": "center",
                           "alignItems": "center",
@@ -7383,7 +7383,7 @@
                               "height": 17,
                               "icon": "calendar",
                               "library": "lucide",
-                              "fill": "#f59e0b"
+                              "fill": "$ohas-risk-medium"
                             }
                           ]
                         },
@@ -7403,7 +7403,7 @@
                               "type": "frame",
                               "id": "s8KCGb",
                               "name": "Urgency Tag",
-                              "fill": "#78350f",
+                              "fill": "$ohas-risk-medium-bg",
                               "cornerRadius": 6,
                               "padding": [
                                 4,
@@ -7416,7 +7416,7 @@
                                   "type": "text",
                                   "id": "uMBuR",
                                   "name": "Tag Text",
-                                  "fill": "#f59e0b",
+                                  "fill": "$ohas-risk-medium",
                                   "content": "WITHIN 1 MONTH",
                                   "fontFamily": "$ohas-font-body",
                                   "fontSize": 11,
@@ -7486,7 +7486,7 @@
                           "name": "Icon Circle",
                           "width": 36,
                           "height": 36,
-                          "fill": "#0c4a6e",
+                          "fill": "$ohas-primary-soft",
                           "cornerRadius": 999,
                           "justifyContent": "center",
                           "alignItems": "center",
@@ -7499,7 +7499,7 @@
                               "height": 17,
                               "icon": "calendar-check",
                               "library": "lucide",
-                              "fill": "#0ea5e9"
+                              "fill": "$ohas-primary-dark"
                             }
                           ]
                         },
@@ -7519,7 +7519,7 @@
                               "type": "frame",
                               "id": "L1CXN",
                               "name": "Urgency Tag",
-                              "fill": "#0c4a6e",
+                              "fill": "$ohas-primary-soft",
                               "cornerRadius": 6,
                               "padding": [
                                 4,
@@ -7532,7 +7532,7 @@
                                   "type": "text",
                                   "id": "GgsPw",
                                   "name": "Tag Text",
-                                  "fill": "#0ea5e9",
+                                  "fill": "$ohas-primary-dark",
                                   "content": "ROUTINE",
                                   "fontFamily": "$ohas-font-body",
                                   "fontSize": 11,
@@ -8718,6 +8718,12 @@
           "name": "Spacer",
           "width": "fill_container",
           "height": 1
+        },
+        {
+          "id": "EMQHP",
+          "type": "ref",
+          "ref": "sXmRw",
+          "name": "Theme Toggle"
         },
         {
           "type": "text",
@@ -18489,7 +18495,8 @@
                           "content": "Your assessment triggered Rule GUM-01 (Gingivitis). The bleeding is caused by plaque irritating gum tissue at the gumline — a reversible condition with proper brushing and flossing.",
                           "lineHeight": 1.5,
                           "fontFamily": "$font-body",
-                          "fontSize": 13
+                          "fontSize": 13,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "frame",
@@ -18533,7 +18540,8 @@
                               "fill": "$muted",
                               "content": "1 of 3 rules",
                               "fontFamily": "$font-body",
-                              "fontSize": 11
+                              "fontSize": 11,
+                              "fontWeight": "normal"
                             }
                           ]
                         }
@@ -20336,6 +20344,91 @@
           ]
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "sXmRw",
+      "x": 0,
+      "y": -500,
+      "name": "Theme Toggle",
+      "reusable": true,
+      "fill": "$ohas-surface-2",
+      "cornerRadius": 999,
+      "stroke": "$ohas-border",
+      "strokeWidth": 1,
+      "gap": 2,
+      "padding": 3,
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "Nqsol",
+          "name": "Light Option",
+          "fill": "$ohas-bg",
+          "cornerRadius": 999,
+          "stroke": "$ohas-border",
+          "strokeWidth": 1,
+          "padding": 6,
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "icon",
+              "id": "M3IyZC",
+              "name": "Sun Icon",
+              "width": 14,
+              "height": 14,
+              "icon": "sun",
+              "library": "lucide",
+              "fill": "$ohas-primary"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "F2V4U",
+          "name": "Dark Option",
+          "fill": "#00000000",
+          "cornerRadius": 999,
+          "padding": 6,
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "icon",
+              "id": "m5Rmch",
+              "name": "Moon Icon",
+              "width": 14,
+              "height": 14,
+              "icon": "moon",
+              "library": "lucide",
+              "fill": "$ohas-muted"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bc6Hu",
+      "type": "ref",
+      "ref": "sXmRw",
+      "name": "Theme Toggle (Dark selected reference)",
+      "x": 84,
+      "y": -500,
+      "descendants": {
+        "Nqsol": {
+          "fill": "#00000000"
+        },
+        "M3IyZC": {
+          "fill": "$ohas-muted"
+        },
+        "F2V4U": {
+          "fill": "$ohas-surface"
+        },
+        "m5Rmch": {
+          "fill": "$ohas-primary"
+        }
+      }
     }
   ],
   "themes": {
@@ -21064,63 +21157,258 @@
     },
     "ohas-primary": {
       "type": "color",
-      "value": "#0ea5e9"
+      "value": [
+        {
+          "value": "#0EA5E9",
+          "theme": {
+            "Mode": "Light"
+          }
+        },
+        {
+          "value": "#0ea5e9",
+          "theme": {
+            "Mode": "Dark"
+          }
+        }
+      ]
     },
     "ohas-primary-dark": {
       "type": "color",
-      "value": "#0284c7"
+      "value": [
+        {
+          "value": "#0284C7",
+          "theme": {
+            "Mode": "Light"
+          }
+        },
+        {
+          "value": "#0284c7",
+          "theme": {
+            "Mode": "Dark"
+          }
+        }
+      ]
     },
     "ohas-primary-soft": {
       "type": "color",
-      "value": "#0c4a6e"
+      "value": [
+        {
+          "value": "#E0F2FE",
+          "theme": {
+            "Mode": "Light"
+          }
+        },
+        {
+          "value": "#0c4a6e",
+          "theme": {
+            "Mode": "Dark"
+          }
+        }
+      ]
     },
     "ohas-risk-low": {
       "type": "color",
-      "value": "#22c55e"
+      "value": [
+        {
+          "value": "#15803D",
+          "theme": {
+            "Mode": "Light"
+          }
+        },
+        {
+          "value": "#22c55e",
+          "theme": {
+            "Mode": "Dark"
+          }
+        }
+      ]
     },
     "ohas-risk-low-bg": {
       "type": "color",
-      "value": "#14532d"
+      "value": [
+        {
+          "value": "#DCFCE7",
+          "theme": {
+            "Mode": "Light"
+          }
+        },
+        {
+          "value": "#14532d",
+          "theme": {
+            "Mode": "Dark"
+          }
+        }
+      ]
     },
     "ohas-risk-medium": {
       "type": "color",
-      "value": "#f59e0b"
+      "value": [
+        {
+          "value": "#B45309",
+          "theme": {
+            "Mode": "Light"
+          }
+        },
+        {
+          "value": "#f59e0b",
+          "theme": {
+            "Mode": "Dark"
+          }
+        }
+      ]
     },
     "ohas-risk-medium-bg": {
       "type": "color",
-      "value": "#78350f"
+      "value": [
+        {
+          "value": "#FEF3C7",
+          "theme": {
+            "Mode": "Light"
+          }
+        },
+        {
+          "value": "#78350f",
+          "theme": {
+            "Mode": "Dark"
+          }
+        }
+      ]
     },
     "ohas-risk-high": {
       "type": "color",
-      "value": "#ef4444"
+      "value": [
+        {
+          "value": "#B91C1C",
+          "theme": {
+            "Mode": "Light"
+          }
+        },
+        {
+          "value": "#ef4444",
+          "theme": {
+            "Mode": "Dark"
+          }
+        }
+      ]
     },
     "ohas-risk-high-bg": {
       "type": "color",
-      "value": "#7f1d1d"
+      "value": [
+        {
+          "value": "#FEE2E2",
+          "theme": {
+            "Mode": "Light"
+          }
+        },
+        {
+          "value": "#7f1d1d",
+          "theme": {
+            "Mode": "Dark"
+          }
+        }
+      ]
     },
     "ohas-bg": {
       "type": "color",
-      "value": "#0f172a"
+      "value": [
+        {
+          "value": "#FFFFFF",
+          "theme": {
+            "Mode": "Light"
+          }
+        },
+        {
+          "value": "#0f172a",
+          "theme": {
+            "Mode": "Dark"
+          }
+        }
+      ]
     },
     "ohas-surface": {
       "type": "color",
-      "value": "#1e293b"
+      "value": [
+        {
+          "value": "#F8FAFC",
+          "theme": {
+            "Mode": "Light"
+          }
+        },
+        {
+          "value": "#1e293b",
+          "theme": {
+            "Mode": "Dark"
+          }
+        }
+      ]
     },
     "ohas-surface-2": {
       "type": "color",
-      "value": "#283548"
+      "value": [
+        {
+          "value": "#EEF2F6",
+          "theme": {
+            "Mode": "Light"
+          }
+        },
+        {
+          "value": "#283548",
+          "theme": {
+            "Mode": "Dark"
+          }
+        }
+      ]
     },
     "ohas-border": {
       "type": "color",
-      "value": "#334155"
+      "value": [
+        {
+          "value": "#E2E8F0",
+          "theme": {
+            "Mode": "Light"
+          }
+        },
+        {
+          "value": "#334155",
+          "theme": {
+            "Mode": "Dark"
+          }
+        }
+      ]
     },
     "ohas-text": {
       "type": "color",
-      "value": "#f1f5f9"
+      "value": [
+        {
+          "value": "#0F172A",
+          "theme": {
+            "Mode": "Light"
+          }
+        },
+        {
+          "value": "#f1f5f9",
+          "theme": {
+            "Mode": "Dark"
+          }
+        }
+      ]
     },
     "ohas-muted": {
       "type": "color",
-      "value": "#94a3b8"
+      "value": [
+        {
+          "value": "#64748B",
+          "theme": {
+            "Mode": "Light"
+          }
+        },
+        {
+          "value": "#94a3b8",
+          "theme": {
+            "Mode": "Dark"
+          }
+        }
+      ]
     },
     "ohas-font-body": {
       "type": "string",

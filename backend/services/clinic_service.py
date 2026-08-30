@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import math
 
@@ -9,13 +8,17 @@ from schemas.clinic import ClinicResponse
 
 logger = logging.getLogger(__name__)
 
-NEARBY_SEARCH_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
-PLACE_DETAILS_URL = "https://maps.googleapis.com/maps/api/place/details/json"
-
-# Nearby Search doesn't return a phone number — that needs a separate Place
-# Details call per result. Capped to bound latency/cost; results beyond this
-# (already sorted by distance) just come back with phone: null.
-MAX_PHONE_LOOKUPS = 10
+# The legacy "Places API" (maps.googleapis.com/maps/api/place/*) returns
+# REQUEST_DENIED for projects that only have "Places API (New)" enabled —
+# which is the default for newly-created Google Cloud projects. Places API
+# (New) also returns the phone number directly in the search response, so a
+# separate Place Details lookup per result is no longer needed.
+SEARCH_NEARBY_URL = "https://places.googleapis.com/v1/places:searchNearby"
+FIELD_MASK = (
+    "places.id,places.displayName,places.formattedAddress,"
+    "places.rating,places.location,places.nationalPhoneNumber"
+)
+MAX_RADIUS_M = 50000
 
 
 class ClinicServiceUnavailableError(Exception):
@@ -41,70 +44,46 @@ class ClinicService:
         if not settings.GOOGLE_PLACES_API_KEY:
             raise ClinicServiceUnavailableError()
 
-        params = {
-            "location": f"{lat},{lng}",
-            "radius": radius_m,
-            "type": "dentist",
-            "key": settings.GOOGLE_PLACES_API_KEY,
+        headers = {
+            "Content-Type": "application/json",
+            "X-Goog-Api-Key": settings.GOOGLE_PLACES_API_KEY,
+            "X-Goog-FieldMask": FIELD_MASK,
+        }
+        payload = {
+            "includedTypes": ["dentist"],
+            "maxResultCount": 20,
+            "locationRestriction": {
+                "circle": {
+                    "center": {"latitude": lat, "longitude": lng},
+                    "radius": min(radius_m, MAX_RADIUS_M),
+                }
+            },
         }
 
         try:
             async with httpx.AsyncClient(timeout=15.0) as client:
-                response = await client.get(NEARBY_SEARCH_URL, params=params)
+                response = await client.post(SEARCH_NEARBY_URL, headers=headers, json=payload)
                 response.raise_for_status()
-                body = response.json()
-                status = body.get("status")
-                if status not in ("OK", "ZERO_RESULTS"):
-                    raise ValueError(f"Places API returned status={status}")
-                results = body.get("results", [])
+                places = response.json().get("places", [])
 
                 clinics = []
-                for place in results:
-                    location = place.get("geometry", {}).get("location", {})
-                    place_lat, place_lng = location.get("lat"), location.get("lng")
+                for place in places:
+                    location = place.get("location", {})
+                    place_lat, place_lng = location.get("latitude"), location.get("longitude")
                     if place_lat is None or place_lng is None:
                         continue
                     clinics.append(
-                        {
-                            "place_id": place["place_id"],
-                            "name": place.get("name", "Unknown clinic"),
-                            "address": place.get("vicinity"),
-                            "rating": place.get("rating"),
-                            "distance_km": round(_haversine_km(lat, lng, place_lat, place_lng), 2),
-                        }
+                        ClinicResponse(
+                            place_id=place["id"],
+                            name=place.get("displayName", {}).get("text", "Unknown clinic"),
+                            address=place.get("formattedAddress"),
+                            rating=place.get("rating"),
+                            distance_km=round(_haversine_km(lat, lng, place_lat, place_lng), 2),
+                            phone=place.get("nationalPhoneNumber"),
+                        )
                     )
-                clinics.sort(key=lambda c: c["distance_km"])
-
-                phones = await asyncio.gather(
-                    *(
-                        self._fetch_phone(client, c["place_id"])
-                        for c in clinics[:MAX_PHONE_LOOKUPS]
-                    )
-                )
-                for clinic, phone in zip(clinics, phones):
-                    clinic["phone"] = phone
-                for clinic in clinics[MAX_PHONE_LOOKUPS:]:
-                    clinic["phone"] = None
-
-                return [ClinicResponse(**c) for c in clinics]
+                clinics.sort(key=lambda c: c.distance_km)
+                return clinics
         except (httpx.HTTPError, KeyError, ValueError) as exc:
             logger.warning("Google Places service unavailable: %s", exc)
             raise ClinicServiceUnavailableError() from exc
-
-    async def _fetch_phone(self, client: httpx.AsyncClient, place_id: str) -> str | None:
-        try:
-            response = await client.get(
-                PLACE_DETAILS_URL,
-                params={
-                    "place_id": place_id,
-                    "fields": "formatted_phone_number",
-                    "key": settings.GOOGLE_PLACES_API_KEY,
-                },
-            )
-            response.raise_for_status()
-            return response.json().get("result", {}).get("formatted_phone_number")
-        except httpx.HTTPError as exc:
-            # A single clinic's phone lookup failing shouldn't fail the
-            # whole nearby-search response.
-            logger.warning("Place Details lookup failed for place_id=%s: %s", place_id, exc)
-            return None

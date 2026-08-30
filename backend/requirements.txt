@@ -12,5 +12,13 @@ email-validator>=2.1
 python-multipart>=0.0.9
 httpx>=0.27
 Pillow>=10.3
+
+# Windows-only: patches certifi/ssl to trust the OS certificate store, not
+# just certifi's bundled public CA list. Without this, outbound HTTPS calls
+# (Google Places, Groq, HuggingFace, Telegram, ...) fail with
+# SSL: CERTIFICATE_VERIFY_FAILED on machines where a corporate proxy or
+# antivirus does TLS inspection with a root cert that's in the Windows
+# trust store but not in certifi's bundle.
+pip-system-certs; sys_platform == "win32"
 pytest>=8.0
 pytest-asyncio>=0.23

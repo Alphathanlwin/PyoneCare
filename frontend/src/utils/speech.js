@@ -1,10 +1,5 @@
-// Dr. Ava's voice. Tries the real neural TTS backend first (ElevenLabs, via
-// POST /api/v1/tts) and falls back to the browser's built-in SpeechSynthesis
-// if that's unavailable (no key configured server-side, network error, etc.)
-// — callers only ever see the same onStart/onEnd contract either way.
-import apiClient from '../api/auth';
-
-let currentAudio = null;
+// Dr. Ava's voice — the browser's built-in SpeechSynthesis. Callers only
+// ever see the onStart/onEnd contract below.
 
 function pickSystemVoice() {
   if (typeof window === 'undefined' || !window.speechSynthesis) return null;
@@ -17,15 +12,30 @@ function pickSystemVoice() {
   );
 }
 
-function speakWithSystemVoice(text, { onStart, onEnd, rate, pitch, volume }) {
+export function speak(text, { onStart, onEnd, rate = 1, pitch = 1.05, volume = 1 } = {}) {
   const hasSpeech = typeof window !== 'undefined' && 'speechSynthesis' in window;
+  const duration = Math.max(900, (text || '').split(/\s+/).length * 260);
 
   if (!hasSpeech || !text) {
     onStart?.();
-    const duration = Math.max(900, (text || '').split(/\s+/).length * 260);
     const timer = setTimeout(() => onEnd?.(), duration);
     return { cancel: () => clearTimeout(timer) };
   }
+
+  // Chrome's SpeechSynthesis is known to silently drop onstart/onend/onerror
+  // — most reliably reproduced by calling cancel() immediately before a new
+  // speak(), which is exactly what happens every time the quiz advances to
+  // the next question. Without a fallback timer, callers gated on onEnd
+  // (e.g. "answerable" in SymptomVoiceStep) would then be stuck forever, so
+  // guarantee onEnd fires at most once no matter what the browser does.
+  let settled = false;
+  const finish = () => {
+    if (settled) return;
+    settled = true;
+    clearTimeout(safetyTimer);
+    onEnd?.();
+  };
+  const safetyTimer = setTimeout(finish, duration + 2000);
 
   window.speechSynthesis.cancel();
 
@@ -38,72 +48,21 @@ function speakWithSystemVoice(text, { onStart, onEnd, rate, pitch, volume }) {
   if (voice) utterance.voice = voice;
 
   utterance.onstart = () => onStart?.();
-  utterance.onend = () => onEnd?.();
-  utterance.onerror = () => onEnd?.();
+  utterance.onend = finish;
+  utterance.onerror = finish;
 
   window.speechSynthesis.speak(utterance);
 
-  return { cancel: () => window.speechSynthesis.cancel() };
-}
-
-export function speak(text, { onStart, onEnd, rate = 1, pitch = 1.05, volume = 1 } = {}) {
-  if (!text) {
-    onStart?.();
-    onEnd?.();
-    return { cancel: () => {} };
-  }
-
-  let cancelled = false;
-  let fallbackHandle = null;
-
-  apiClient
-    .post('/tts/', { text }, { responseType: 'blob' })
-    .then((response) => {
-      if (cancelled) return;
-
-      const url = URL.createObjectURL(response.data);
-      const audio = new Audio(url);
-      audio.volume = volume;
-      currentAudio = audio;
-
-      const cleanup = () => {
-        URL.revokeObjectURL(url);
-        if (currentAudio === audio) currentAudio = null;
-      };
-
-      audio.onplay = () => onStart?.();
-      audio.onended = () => {
-        onEnd?.();
-        cleanup();
-      };
-      audio.onerror = () => {
-        onEnd?.();
-        cleanup();
-      };
-
-      audio.play().catch(() => {
-        onEnd?.();
-        cleanup();
-      });
-    })
-    .catch(() => {
-      if (!cancelled) fallbackHandle = speakWithSystemVoice(text, { onStart, onEnd, rate, pitch, volume });
-    });
-
   return {
     cancel: () => {
-      cancelled = true;
-      currentAudio?.pause();
-      currentAudio = null;
-      fallbackHandle?.cancel();
-      if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel();
+      clearTimeout(safetyTimer);
+      settled = true;
+      window.speechSynthesis.cancel();
     },
   };
 }
 
 export function stopSpeaking() {
-  currentAudio?.pause();
-  currentAudio = null;
   if (typeof window !== 'undefined' && window.speechSynthesis) {
     window.speechSynthesis.cancel();
   }

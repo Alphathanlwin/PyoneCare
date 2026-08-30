@@ -324,41 +324,6 @@ Same structure as the `POST /assessments/` response data object.
  Assessment belongs to a different user           
 |
 ---
-## TTS Endpoints
-### `POST /api/v1/tts/`
-Synthesizes Dr. Ava's spoken caption text via ElevenLabs. Requires auth (cost
-control — this is a paid per-character API).
-**Request Body**
-```json
-{ "text": "Hi, I'm Dr. Ava. Let's do a quick smile check together." }
-```
-`text`: required, 1-500 characters.
-**Response `200 OK`**
-Raw `audio/mpeg` bytes (not the standard JSON envelope — this is a binary
-audio response, played directly via the browser's `Audio` API).
-**Error Codes**
-|
- Code                       
-|
- HTTP 
-|
- Meaning                                              
-|
-|
-----------------------------
-|
-------
-|
-------------------------------------------------------
-|
-|
-`TTS_SERVICE_UNAVAILABLE`
-|
- 503  
-|
- No `ELEVENLABS_API_KEY` configured, or the ElevenLabs API failed/timed out — the frontend falls back to the browser's built-in speech synthesis on this response rather than treating it as a hard failure. 
-|
----
 ## Auth Header
 ```
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...

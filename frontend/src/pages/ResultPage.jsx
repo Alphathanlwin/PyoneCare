@@ -6,6 +6,7 @@ import RiskBadge from '../components/RiskBadge';
 import DiagnosisCard from '../components/DiagnosisCard';
 import RecommendationCard from '../components/RecommendationCard';
 import ChatPanel from '../components/ChatPanel';
+import NearbyClinics from '../components/NearbyClinics';
 import { CONDITION_LABELS } from '../data/clinicalLabels';
 import { buildResultSummary } from '../utils/resultSummary';
 
@@ -125,6 +126,11 @@ function ResultPage() {
           </div>
         </section>
       )}
+
+      <section className="result-section">
+        <h2 className="result-section-title">Find a Dentist</h2>
+        <NearbyClinics />
+      </section>
 
       <section className="result-section">
         <h2 className="result-section-title">Have a Question?</h2>

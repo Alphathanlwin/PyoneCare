@@ -7,7 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from routers import assessment, auth, chat, clinic, telegram, tts
+from routers import assessment, auth, chat, clinic, telegram
 from utils.response import error_response
 
 logger = logging.getLogger(__name__)
@@ -36,7 +36,6 @@ app.add_middleware(
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Auth"])
 app.include_router(assessment.router, prefix="/api/v1/assessments", tags=["Assessments"])
-app.include_router(tts.router, prefix="/api/v1/tts", tags=["TTS"])
 app.include_router(chat.router, prefix="/api/v1/chat", tags=["Chat"])
 app.include_router(telegram.router, prefix="/api/v1/telegram", tags=["Telegram"])
 app.include_router(clinic.router, prefix="/api/v1/clinics", tags=["Clinics"])

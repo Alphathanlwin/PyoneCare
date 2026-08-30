@@ -67,15 +67,6 @@ class PrologEngineErrorException(HTTPException):
         )
 
 
-class TTSServiceUnavailableException(HTTPException):
-    def __init__(self) -> None:
-        super().__init__(
-            status_code=503,
-            detail={
-                "code": "TTS_SERVICE_UNAVAILABLE",
-                "message": "The voice service is temporarily unavailable.",
-            },
-        )
 
 
 class AssessmentNotFoundException(HTTPException):

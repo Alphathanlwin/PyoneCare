@@ -203,43 +203,14 @@ def extract_symptoms_from_cv(cv_response: list[dict], threshold: float = 0.6) ->
             detected.append(CV_LABEL_TO_SYMPTOM[item["label"]])
     return detected
 ```
-## ElevenLabs Text-to-Speech API (Dr. Ava's Voice)
-### Usage Pattern
-```python
-import httpx
-from config import settings
-
-DEFAULT_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"  # "Rachel" — warm, expressive default
-
-async def synthesize_speech(text: str) -> bytes:
-    voice_id = settings.ELEVENLABS_VOICE_ID or DEFAULT_VOICE_ID
-    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
-    headers = {
-        "xi-api-key": settings.ELEVENLABS_API_KEY,
-        "Content-Type": "application/json",
-        "Accept": "audio/mpeg",
-    }
-    payload = {
-        "text": text,
-        "model_id": "eleven_turbo_v2_5",
-        "voice_settings": {
-            "stability": 0.45, "similarity_boost": 0.85,
-            "style": 0.6, "use_speaker_boost": True,
-        },
-    }
-    async with httpx.AsyncClient(timeout=15.0) as client:
-        response = await client.post(url, headers=headers, json=payload)
-        response.raise_for_status()
-        return response.content  # raw audio/mpeg bytes
-```
-### Graceful Degradation
-`ELEVENLABS_API_KEY` is optional (defaults to `""` in `config.py`) — with no
-key configured, or on any network/API failure, `tts_service.py` raises
-`TTSServiceUnavailableError` and `POST /api/v1/tts` returns `503
-TTS_SERVICE_UNAVAILABLE`. The frontend's `utils/speech.js` treats that as a
-normal fallback signal (not an error to surface to the user) and switches to
-the browser's built-in `SpeechSynthesis` — Dr. Ava still speaks, just with a
-lower-quality voice, until a real API key is configured.
+## Dr. Ava's Voice
+There is no backend TTS call. `frontend/src/utils/speech.js` speaks directly
+via the browser's built-in `SpeechSynthesis` API — no network request, no API
+key, no cost. A duration-based safety timeout guarantees `onEnd` fires even
+if the browser's speech engine silently drops its events (a known Chrome
+quirk, most reliably triggered by calling `cancel()` immediately before a new
+`speak()` — exactly what happens on every question transition in the guided
+symptom quiz).
 ---
 ## Pillow (Image Validation)
 ```python

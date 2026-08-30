@@ -10,6 +10,12 @@ import { CAPTURE_ANGLES, initialPhotos } from '../data/captureAngles';
 // with the full {front, upper, lower} base64 payload.
 function GuidedCapture({ onComplete }) {
   const [cameraStatus, setCameraStatus] = useState('requesting'); // requesting | granted | denied
+  // Many browsers show the camera permission prompt as a small address-bar
+  // icon rather than a modal — easy to miss, and the getUserMedia() promise
+  // just sits pending until the user notices and responds to it. Rather than
+  // leaving them on a bare spinner indefinitely, surface a manual way out
+  // after a few seconds.
+  const [slowRequest, setSlowRequest] = useState(false);
   const [angleIndex, setAngleIndex] = useState(0);
   const [pendingCapture, setPendingCapture] = useState(null);
   const [photos, setPhotos] = useState(initialPhotos);
@@ -22,6 +28,10 @@ function GuidedCapture({ onComplete }) {
   const streamRef = useRef(null);
   const canvasRef = useRef(null);
   const videoRef = useRef(null);
+  // Set by handleSkipToUpload() — guards against a permission prompt the
+  // user already skipped past resolving *after* the fact and silently
+  // flipping them back into the camera view from the upload fallback.
+  const skippedRef = useRef(false);
 
   const angle = CAPTURE_ANGLES[angleIndex];
 
@@ -37,7 +47,7 @@ function GuidedCapture({ onComplete }) {
 
     request
       .then((stream) => {
-        if (cancelled) {
+        if (cancelled || skippedRef.current) {
           stream.getTracks().forEach((t) => t.stop());
           return;
         }
@@ -54,6 +64,17 @@ function GuidedCapture({ onComplete }) {
       streamRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    if (cameraStatus !== 'requesting') return undefined;
+    const timer = setTimeout(() => setSlowRequest(true), 6000);
+    return () => clearTimeout(timer);
+  }, [cameraStatus]);
+
+  const handleSkipToUpload = () => {
+    skippedRef.current = true;
+    setCameraStatus('denied');
+  };
 
   // Re-attaches the already-granted stream whenever the <video> element
   // (re)mounts — it unmounts during the confirm/retake preview swap.
@@ -150,6 +171,16 @@ function GuidedCapture({ onComplete }) {
           <div className="live-camera-loading">
             <span className="spinner"></span>
             <p>Turning on your camera…</p>
+            {slowRequest && (
+              <div className="live-camera-slow">
+                <p className="live-camera-slow-hint">
+                  Still waiting? Check your browser's address bar for a camera permission prompt.
+                </p>
+                <button type="button" className="live-link-btn" onClick={handleSkipToUpload}>
+                  Skip camera, upload a photo instead
+                </button>
+              </div>
+            )}
           </div>
         )}
 

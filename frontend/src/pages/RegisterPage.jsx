@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { register } from '../api/auth';
+import AuthSidePanel from '../components/AuthSidePanel';
+import pyoneCareLogo from '../assets/brand/pyonecare-logo.png';
 
 function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -108,7 +110,7 @@ function RegisterPage() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-header">
-          <div className="auth-logo">OHAS</div>
+          <img src={pyoneCareLogo} alt="PyoneCare" className="auth-logo-image" />
           <h1 className="auth-title">Create Account</h1>
           <p>Join us and start managing your oral health.</p>
         </div>
@@ -203,6 +205,8 @@ function RegisterPage() {
           Already have an account? <a href="/login">Sign in</a>
         </div>
       </div>
+
+      <AuthSidePanel />
     </div>
   );
 }

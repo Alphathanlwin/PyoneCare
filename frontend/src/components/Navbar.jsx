@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import ThemeToggle from './ThemeToggle';
+import pyoneCareIcon from '../assets/brand/pyonecare-icon.png';
 
 function Navbar() {
   const { user, logout, isAuthenticated } = useAuth();
@@ -24,7 +26,10 @@ function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-container">
-        <Link to="/" className="navbar-brand">OHAS</Link>
+        <Link to="/" className="navbar-brand">
+          <img src={pyoneCareIcon} alt="" className="navbar-brand-icon" />
+          PyoneCare
+        </Link>
         
         <div className="navbar-nav">
           <Link 
@@ -48,6 +53,7 @@ function Navbar() {
         </div>
 
         <div className="navbar-user">
+          <ThemeToggle />
           <span className="navbar-user-name">{user?.full_name || user?.email || 'User'}</span>
           <div className="navbar-user-avatar">{getInitials()}</div>
           <button 

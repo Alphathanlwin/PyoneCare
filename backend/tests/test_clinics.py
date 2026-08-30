@@ -4,6 +4,7 @@ from unittest.mock import patch
 import httpx
 import pytest
 
+from config import settings
 from database import engine
 from main import app
 from schemas.clinic import ClinicResponse
@@ -45,10 +46,11 @@ async def test_nearby_clinics_unconfigured_returns_503():
         token = await _register_and_login(client, _unique_email("clinic1"))
         headers = {"Authorization": f"Bearer {token}"}
 
-        response = await client.get(
-            "/api/v1/clinics/nearby?lat=16.8409&lng=96.1735&radius=5000",
-            headers=headers,
-        )
+        with patch.object(settings, "GOOGLE_PLACES_API_KEY", ""):
+            response = await client.get(
+                "/api/v1/clinics/nearby?lat=16.8409&lng=96.1735&radius=5000",
+                headers=headers,
+            )
 
         assert response.status_code == 503, response.text
         assert response.json()["error"]["code"] == "CLINIC_SERVICE_UNAVAILABLE"

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { login } from '../api/auth';
+import AuthSidePanel from '../components/AuthSidePanel';
+import pyoneCareLogo from '../assets/brand/pyonecare-logo.png';
 
 function LoginPage() {
   const [email, setEmail] = useState('');
@@ -75,7 +77,7 @@ function LoginPage() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-header">
-          <div className="auth-logo">OHAS</div>
+          <img src={pyoneCareLogo} alt="PyoneCare" className="auth-logo-image" />
           <h1 className="auth-title">Sign In</h1>
           <p>Welcome back! Sign in to access your account.</p>
         </div>
@@ -135,6 +137,8 @@ function LoginPage() {
           Don't have an account? <a href="/register">Sign up</a>
         </div>
       </div>
+
+      <AuthSidePanel />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getAssessments } from '../api/assessment';
 import RiskBadge from '../components/RiskBadge';
+import TelegramLinkCard from '../components/TelegramLinkCard';
 
 const RISK_LEVELS = [
   { level: 'LOW', description: 'Maintain good hygiene — brush twice daily and floss.' },
@@ -161,6 +162,8 @@ function DashboardPage() {
           </div>
         </div>
       </div>
+
+      <TelegramLinkCard />
     </div>
   );
 }
