@@ -2,11 +2,15 @@ import asyncio
 import logging
 import sys
 
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
+from config import settings
 from routers import assessment, auth, chat, clinic, telegram
 from utils.response import error_response
 
@@ -23,16 +27,26 @@ if sys.platform == "win32":
 
 app = FastAPI(title="OHAS API", version="1.0.0")
 
+# Exact origins come from CORS_ORIGINS (comma-separated) so production can point
+# at the deployed frontend without a code change. The regex still covers the
+# dev machine's LAN IP on :5173 so a phone on the same Wi-Fi keeps working.
+allowed_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
-    # Also allow the dev machine's LAN IP on the same port, so the frontend
-    # is reachable from a phone on the same Wi-Fi (192.168.x.x / 10.x.x.x).
+    allow_origins=allowed_origins,
     allow_origin_regex=r"http://(192\.168|10)\.\d{1,3}\.\d{1,3}\.\d{1,3}:5173",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Serve uploaded assessment photos. In production Render mounts a persistent
+# disk at backend/uploads (see render.yaml); save_image() writes there and
+# returns "uploads/<file>", so this makes those URLs resolvable.
+UPLOAD_DIR = Path(__file__).resolve().parent / "uploads"
+UPLOAD_DIR.mkdir(exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Auth"])
 app.include_router(assessment.router, prefix="/api/v1/assessments", tags=["Assessments"])

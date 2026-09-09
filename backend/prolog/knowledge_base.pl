@@ -11,6 +11,7 @@
 :- discontiguous explanation/2.
 :- discontiguous recommendation/3.
 
+
 % ============================================================
 % CONDITION: DENTAL CAVITY (dental_cavity)
 % Clinical basis: Visible dark spot + cold sensitivity are

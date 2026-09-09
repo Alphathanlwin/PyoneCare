@@ -25,10 +25,15 @@ class LLMService:
         *,
         system_prompt: str,
         user_message: str,
+        history: list[dict] | None = None,
         temperature: float = 0.0,
         max_tokens: int = 500,
     ) -> str:
-        """Returns the assistant's reply text for a single system+user turn.
+        """Returns the assistant's reply text for a system + optional history + user turn.
+
+        `history` is an already-validated list of {"role", "content"} dicts
+        (prior user/assistant turns) inserted between the system prompt and the
+        latest user message so multi-turn chats keep context.
 
         Raises LLMServiceUnavailableError if no API key is configured or on
         any network/API/parsing failure, so callers can surface a consistent
@@ -38,14 +43,15 @@ class LLMService:
             raise LLMServiceUnavailableError()
 
         headers = {"Authorization": f"Bearer {settings.LLM_API_KEY}"}
+        messages = [{"role": "system", "content": system_prompt}]
+        if history:
+            messages.extend(history)
+        messages.append({"role": "user", "content": user_message})
         payload = {
             "model": settings.LLM_MODEL,
             "temperature": temperature,
             "max_tokens": max_tokens,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message},
-            ],
+            "messages": messages,
         }
 
         try:

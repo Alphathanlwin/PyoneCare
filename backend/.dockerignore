@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+tests/
+*.log
+pytest_history.log
+test.db
+uploads/*
+!uploads/.gitkeep
+.env
+.env.*
+alembic/versions/__pycache__/
