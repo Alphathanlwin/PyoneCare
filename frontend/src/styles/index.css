@@ -311,7 +311,8 @@ button {
     radial-gradient(560px circle at 18% 12%, color-mix(in srgb, var(--color-primary) 16%, transparent) 0%, transparent 60%),
     radial-gradient(480px circle at 86% 88%, color-mix(in srgb, var(--color-primary-light) 14%, transparent) 0%, transparent 60%),
     var(--color-bg);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .auth-card {
@@ -326,6 +327,17 @@ button {
   box-shadow: var(--shadow-xl);
 }
 
+/* Dark mode: the default surface/border/shadow leave the card almost
+   invisible against the near-black page bg — lift the fill, brighten the
+   border and use a light ring so the panel reads as a distinct card. */
+:root[data-theme="dark"] .auth-card {
+  background: var(--color-surface-2);
+  border-color: var(--color-border-light);
+  box-shadow:
+    0 0 0 1px rgba(148, 163, 184, 0.1),
+    0 24px 60px -12px rgba(0, 0, 0, 0.65);
+}
+
 .auth-header {
   text-align: center;
   margin-bottom: var(--spacing-xl);
@@ -337,6 +349,16 @@ button {
   max-width: 220px;
   height: auto;
   margin: 0 auto var(--spacing-md);
+}
+
+/* The logo art is drawn for light backgrounds — navy "Pyone" text and a pale
+   blue halo that turns into a murky box on the dark card. Sit it on a white
+   rounded plate in dark mode so it stays on-brand and legible. */
+:root[data-theme="dark"] .auth-logo-image {
+  max-width: 200px;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: #ffffff;
+  border-radius: var(--radius-lg);
 }
 
 /* Branded illustration shown beside the auth card — desktop only, see

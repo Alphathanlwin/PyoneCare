@@ -57,14 +57,25 @@ npm install
 3. Start the app:
 
 ```powershell
-npm run dev -- --host 0.0.0.0
+npm run dev
 ```
 
-The frontend runs at `https://localhost:5173` and can be reached from a phone on the same network using the machine's LAN IP.
+The frontend runs at `http://localhost:5173`. Plain HTTP on `localhost` is a
+secure context, so geolocation (Nearby Clinics) and the live camera both work
+with no certificate warning.
+
+To reach it from a phone on the same Wi-Fi, start it with HTTPS enabled (a
+non-`localhost` origin needs it for the camera and geolocation):
+
+```powershell
+$env:HTTPS=1; npm run dev
+```
+
+Then open the machine's LAN IP, e.g. `https://172.20.11.222:5173`.
 
 ## Phone Access (yours or a friend's)
 
-Anyone on the **same Wi-Fi network** as this machine — you or a friend — can open the app on their phone once both servers above are running:
+Anyone on the **same Wi-Fi network** as this machine — you or a friend — can open the app on their phone once both servers above are running. Start the frontend with HTTPS enabled (`$env:HTTPS=1; npm run dev`), then open:
 
 ```text
 https://172.20.11.222:5173
@@ -93,6 +104,37 @@ this once; after that it won't ask again for that address.
 - Use either the static questionnaire under `/assessment/new` or the live screening flow at `/assessment/live`.
 - Review the generated result on the result page, including disclaimer copy, recommendations, and risk badge.
 - Open the history dashboard to review prior assessments and pagination state.
+
+## Deployment (Render)
+
+The backend ships as a Docker image (it needs the `swipl` binary on PATH for
+the risk engine); the frontend is a static build. Both are described in
+[`render.yaml`](render.yaml) as a Render Blueprint.
+
+1. Push the repo to GitHub/GitLab and edit the two `repo:` lines in
+   `render.yaml` to point at it.
+2. In the Render dashboard: **New → Blueprint →** select the repo.
+3. When prompted, provide every env var marked `sync: false`. **Rotate the
+   secrets first** — the values currently in `backend/.env` are committed
+   history and must be regenerated (Supabase password, Groq/HuggingFace keys,
+   Telegram bot token, Google Places key, and a fresh `SECRET_KEY`).
+4. First deploy creates `ohas-api` and `ohas-web`. Then:
+   - set `CORS_ORIGINS` on `ohas-api` to the `ohas-web` URL,
+   - set `VITE_API_BASE_URL` on `ohas-web` to `<ohas-api URL>/api/v1`,
+   - redeploy both.
+5. Point the Telegram webhook at `https://<ohas-api>/api/v1/telegram/webhook`
+   (using `TELEGRAM_WEBHOOK_SECRET`).
+
+Notes:
+
+- `alembic upgrade head` runs automatically each deploy (`preDeployCommand`).
+- Uploaded photos are stored on a 1 GB persistent disk mounted at
+  `/app/uploads` and served at `/uploads/...`.
+- The persistent disk and pre-deploy command require a paid instance type
+  (Starter). Keep the DB on Supabase.
+
+Local Docker parity: `cd backend && docker build -t ohas-api . && docker run
+--env-file .env -p 8000:8000 ohas-api`.
 
 ## Common issues
 

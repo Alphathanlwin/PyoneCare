@@ -121,6 +121,7 @@ risk_level(dental_cavity, high) :-
     symptom(spontaneous_pain).
 risk_level(dental_cavity, high) :-
     possible(dental_cavity),
+    
     symptom(pressure_pain).
 risk_level(dental_cavity, medium) :-
     possible(dental_cavity).

@@ -1,0 +1,75 @@
+# Render Blueprint — deploys the OHAS backend (Docker) and frontend (static).
+#
+# Usage:
+#   1. Push this repo to GitHub/GitLab.
+#   2. Render Dashboard -> New -> Blueprint -> pick this repo.
+#   3. Fill in every env var marked `sync: false` when prompted (values are
+#      NOT read from backend/.env — that file stays out of the image).
+#   4. After the first deploy, set CORS_ORIGINS to the ohas-web URL and
+#      VITE_API_BASE_URL to "<ohas-api URL>/api/v1", then redeploy both.
+#
+# Note: the persistent disk and preDeployCommand require a paid instance type
+# (Starter, ~$7/mo). Free web services have neither.
+
+services:
+  - type: web
+    name: ohas-api
+    runtime: docker
+    repo: https://github.com/OWNER/Oral-Health-Advisory-System   # <- set your repo
+    branch: main
+    region: singapore
+    plan: starter
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /api/v1/health
+    # Runs once per deploy, before traffic shifts, inside the built image
+    # (WORKDIR /app, so alembic.ini is on the path).
+    preDeployCommand: "alembic upgrade head"
+    disk:
+      name: ohas-uploads
+      mountPath: /app/uploads
+      sizeGB: 1
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true          # a fresh long random string; do not reuse the dev one
+      - key: CORS_ORIGINS
+        sync: false                   # e.g. https://ohas-web.onrender.com
+      - key: PUBLIC_BASE_URL
+        sync: false                   # e.g. https://ohas-api.onrender.com  (optional)
+      - key: HUGGINGFACE_API_TOKEN
+        sync: false
+      - key: HUGGINGFACE_MODEL_URL
+        sync: false
+      - key: LLM_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        sync: false
+      - key: LLM_API_URL
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_BOT_USERNAME
+        sync: false
+      - key: TELEGRAM_WEBHOOK_SECRET
+        sync: false
+      - key: GOOGLE_PLACES_API_KEY
+        sync: false
+
+  - type: web
+    name: ohas-web
+    runtime: static
+    repo: https://github.com/OWNER/Oral-Health-Advisory-System   # <- set your repo
+    branch: main
+    rootDir: frontend
+    buildCommand: "npm ci && npm run build"
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        sync: false                   # e.g. https://ohas-api.onrender.com/api/v1
+    routes:
+      # SPA fallback so react-router deep links resolve.
+      - type: rewrite
+        source: /*
+        destination: /index.html
