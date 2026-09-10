@@ -100,15 +100,11 @@ export interface Clinic {
   name: string;
   address?: string;
   rating?: number | null;
-  distance_km: number;
+  // null for an area/text search (no origin to measure from).
+  distance_km?: number | null;
   phone?: string;
 }
 
 export interface ClinicListData {
   items: Clinic[];
-}
-
-export interface TelegramLinkData {
-  linked: boolean;
-  deep_link: string | null;
 }

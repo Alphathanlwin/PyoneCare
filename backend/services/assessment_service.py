@@ -1,4 +1,3 @@
-import asyncio
 import uuid
 
 from sqlalchemy import func, select
@@ -14,7 +13,6 @@ from models.symptom_response import SymptomResponse
 from models.user import User
 from schemas.assessment import AssessmentCreateRequest, AssessmentResponse
 from services.cv_service import CVService, CVServiceUnavailableError
-from services.notification_service import NotificationService
 from services.prolog_service import PrologService
 from utils.image_utils import decode_base64_image, save_image, validate_image
 
@@ -72,7 +70,6 @@ class AssessmentService:
         db: AsyncSession,
         cv_service: CVService,
         prolog_service: PrologService,
-        notification_service: NotificationService,
     ) -> AssessmentResponse:
         symptoms = dict(payload.symptoms.model_dump())
         photo_urls: dict[str, str | None] = {}
@@ -123,16 +120,6 @@ class AssessmentService:
         # a greenlet context, so touching them later raises MissingGreenlet.
         await db.refresh(assessment, attribute_names=["id", "created_at", "risk_level"])
         response = AssessmentResponse.model_validate(assessment)
-
-        if user.telegram_chat_id:
-            # Fire-and-forget: scheduled on the running event loop rather
-            # than awaited, so a slow or unreachable Telegram API can never
-            # delay this response. send_assessment_report() never raises —
-            # it only logs — so this task can't produce an "exception never
-            # retrieved" warning either.
-            asyncio.create_task(
-                notification_service.send_assessment_report(user.telegram_chat_id, response)
-            )
 
         return response
 

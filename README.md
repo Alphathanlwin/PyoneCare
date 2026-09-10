@@ -117,13 +117,11 @@ the risk engine); the frontend is a static build. Both are described in
 3. When prompted, provide every env var marked `sync: false`. **Rotate the
    secrets first** — the values currently in `backend/.env` are committed
    history and must be regenerated (Supabase password, Groq/HuggingFace keys,
-   Telegram bot token, Google Places key, and a fresh `SECRET_KEY`).
+   Google Places key, and a fresh `SECRET_KEY`).
 4. First deploy creates `ohas-api` and `ohas-web`. Then:
    - set `CORS_ORIGINS` on `ohas-api` to the `ohas-web` URL,
    - set `VITE_API_BASE_URL` on `ohas-web` to `<ohas-api URL>/api/v1`,
    - redeploy both.
-5. Point the Telegram webhook at `https://<ohas-api>/api/v1/telegram/webhook`
-   (using `TELEGRAM_WEBHOOK_SECRET`).
 
 Notes:
 

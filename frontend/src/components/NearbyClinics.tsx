@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { getNearbyClinics } from '../api/clinic';
+import { useState, type FormEvent } from 'react';
+import { getNearbyClinics, searchClinics } from '../api/clinic';
 import type { ApiErrorLike, Clinic } from '../types/api';
 
 const SEARCH_RADIUS_M = 5000;
@@ -22,65 +22,80 @@ function extractErrorMessage(err: unknown): string {
 
 function getCurrentPosition(): Promise<GeolocationPosition> {
   return new Promise<GeolocationPosition>((resolve, reject) => {
-    // A page served over https with an untrusted dev cert, or any non-localhost
-    // http origin, is not a secure context — Chrome then blocks geolocation
-    // outright and reports it as "denied" even when the site permission is
-    // granted. Detect that up front so the message points at the real fix.
     if (typeof window !== 'undefined' && window.isSecureContext === false) {
-      const err = new Error(
-        `This page isn't a secure context (${window.location.origin}), so the ` +
-          'browser blocks location access. Open the app at http://localhost:5173 ' +
-          '(plain http on localhost is trusted), or serve it over https with a ' +
-          'trusted certificate.'
-      ) as Error & { code?: string };
+      const err = new Error('insecure context') as Error & { code?: string };
       err.code = 'INSECURE_CONTEXT';
       reject(err);
       return;
     }
     if (!navigator.geolocation) {
-      reject(new Error('Your browser does not support location access.'));
+      const err = new Error('unsupported') as Error & { code?: string };
+      err.code = 'UNSUPPORTED';
+      reject(err);
       return;
     }
-    navigator.geolocation.getCurrentPosition(resolve, reject, {
-      enableHighAccuracy: false,
-      timeout: 10000,
-      maximumAge: 5 * 60 * 1000,
-    });
+
+    let settled = false;
+
+    const timer = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        const err = new Error('geolocation timed out') as Error & { code?: number };
+        err.code = 3;
+        reject(err);
+      }
+    }, 15000);
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timer);
+          resolve(pos);
+        }
+      },
+      (err) => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timer);
+          reject(err);
+        }
+      },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 5 * 60 * 1000 },
+    );
   });
 }
 
+// When precise location isn't available we don't dead-end — we just tell the
+// user to use the area box below instead.
 function locationErrorMessage(err: unknown): string {
   const e = err as LocationErrorLike;
-  if (e.code === 'INSECURE_CONTEXT') {
-    return e.message || 'Could not access your location.';
-  }
-  if (e.code === 1) {
-    return (
-      'Location access was blocked. Allow location for this site in your browser, ' +
-      'and make sure the page is on http://localhost:5173 (not an untrusted https ' +
-      'cert). On Windows, also check Settings → Privacy & security → Location is on.'
-    );
+  if (e.code === 'INSECURE_CONTEXT' || e.code === 'UNSUPPORTED' || e.code === 1) {
+    return "Couldn't use your device location. Type your area below to search instead.";
   }
   if (e.code === 2) {
-    return 'Your location could not be determined — check that your OS location service is turned on, then try again.';
+    return "Your location couldn't be determined. Type your area below to search instead.";
   }
   if (e.code === 3) {
-    return 'Getting your location timed out. Please try again.';
+    return 'Getting your location timed out. Type your area below, or try again.';
   }
-  return e.message || 'Could not access your location.';
+  return "Couldn't get your location. Type your area below to search instead.";
 }
 
-// "Find nearby clinics" (Phase 5): geolocates the user, then calls
-// GET /clinics/nearby, degrading gracefully if location is denied or the
-// Google Places-backed backend is unavailable (CLINIC_SERVICE_UNAVAILABLE).
+// "Find nearby clinics" (Phase 5): tries precise geolocation first, and always
+// offers a free-text area search (GET /clinics/search) as a fallback that
+// works with no location permission and on any origin.
 function NearbyClinics() {
   const [status, setStatus] = useState<SearchStatus>('idle');
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [error, setError] = useState('');
+  const [area, setArea] = useState('');
+  const [started, setStarted] = useState(false);
 
-  const handleFind = async () => {
+  const runNearby = async () => {
     setStatus('loading');
     setError('');
+    setStarted(true);
 
     let position: GeolocationPosition;
     try {
@@ -94,6 +109,7 @@ function NearbyClinics() {
     try {
       const { latitude, longitude } = position.coords;
       const response = await getNearbyClinics(latitude, longitude, SEARCH_RADIUS_M);
+      console.log(response);
       setClinics(response?.data?.items || []);
       setStatus('done');
     } catch (err) {
@@ -102,12 +118,54 @@ function NearbyClinics() {
     }
   };
 
-  if (status === 'idle') {
-    return (
-      <button type="button" className="btn-secondary nearby-clinics-trigger" onClick={handleFind}>
-        <PinIcon />
-        Find nearby clinics
+  const runAreaSearch = async (e: FormEvent) => {
+    e.preventDefault();
+    const q = area.trim();
+    if (q.length < 2 || status === 'loading') return;
+
+    setStatus('loading');
+    setError('');
+    setStarted(true);
+
+    try {
+      const response = await searchClinics(q);
+      setClinics(response?.data?.items || []);
+      setStatus('done');
+    } catch (err) {
+      setError(extractErrorMessage(err));
+      setStatus('error');
+    }
+  };
+
+  const areaForm = (
+    <form className="nearby-clinics-area" onSubmit={runAreaSearch}>
+      <input
+        type="text"
+        className="form-input"
+        placeholder="Search by area, e.g. Mandalay or Yangon"
+        value={area}
+        onChange={(e) => setArea(e.target.value)}
+        disabled={status === 'loading'}
+      />
+      <button
+        type="submit"
+        className="btn-secondary"
+        disabled={status === 'loading' || area.trim().length < 2}
+      >
+        Search
       </button>
+    </form>
+  );
+
+  if (!started) {
+    return (
+      <div className="nearby-clinics">
+        <button type="button" className="btn-secondary nearby-clinics-trigger" onClick={runNearby}>
+          <PinIcon />
+          Find clinics near me
+        </button>
+        {areaForm}
+      </div>
     );
   }
 
@@ -116,26 +174,28 @@ function NearbyClinics() {
       <div className="nearby-clinics-header">
         <span className="nearby-clinics-title">
           <PinIcon />
-          Nearby Dental Clinics
+          Dental Clinics
         </span>
         {status !== 'loading' && (
-          <button type="button" className="nearby-clinics-refresh" onClick={handleFind}>
-            Refresh
+          <button type="button" className="nearby-clinics-refresh" onClick={runNearby}>
+            Use my location
           </button>
         )}
       </div>
 
+      {areaForm}
+
       {status === 'loading' && (
         <div className="nearby-clinics-loading">
           <span className="spinner"></span>
-          Finding clinics near you...
+          Searching…
         </div>
       )}
 
       {status === 'error' && <div className="form-error nearby-clinics-error">{error}</div>}
 
       {status === 'done' && clinics.length === 0 && (
-        <p className="text-muted">No dental clinics were found nearby.</p>
+        <p className="text-muted">No dental clinics were found.</p>
       )}
 
       {status === 'done' && clinics.length > 0 && (
@@ -152,7 +212,9 @@ function NearbyClinics() {
                       {clinic.rating.toFixed(1)}
                     </span>
                   )}
-                  <span className="clinic-card-distance">{clinic.distance_km.toFixed(1)} km away</span>
+                  {clinic.distance_km != null && (
+                    <span className="clinic-card-distance">{clinic.distance_km.toFixed(1)} km away</span>
+                  )}
                 </div>
               </div>
               {clinic.phone && (

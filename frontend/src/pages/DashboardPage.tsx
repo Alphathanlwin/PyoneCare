@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getAssessments } from '../api/assessment';
 import RiskBadge from '../components/RiskBadge';
-import TelegramLinkCard from '../components/TelegramLinkCard';
 import type { Assessment } from '../types/api';
 
 const RISK_LEVELS: { level: string; description: string }[] = [
@@ -163,8 +162,6 @@ function DashboardPage() {
           </div>
         </div>
       </div>
-
-      <TelegramLinkCard />
     </div>
   );
 }

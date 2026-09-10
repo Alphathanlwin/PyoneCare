@@ -19,10 +19,10 @@ class Settings(BaseSettings):
     LLM_API_KEY: str = ""
     LLM_MODEL: str = "gpt-4o-mini"
     LLM_API_URL: str = "https://api.openai.com/v1/chat/completions"
-    TELEGRAM_BOT_TOKEN: str = ""
-    TELEGRAM_BOT_USERNAME: str = ""
-    TELEGRAM_WEBHOOK_SECRET: str = ""
     GOOGLE_PLACES_API_KEY: str = ""
+    # Root log level for the app's own loggers. Set LOG_LEVEL=DEBUG to also see
+    # outgoing request payloads (e.g. the Google Places search body).
+    LOG_LEVEL: str = "INFO"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

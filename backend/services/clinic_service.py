@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 # (New) also returns the phone number directly in the search response, so a
 # separate Place Details lookup per result is no longer needed.
 SEARCH_NEARBY_URL = "https://places.googleapis.com/v1/places:searchNearby"
+SEARCH_TEXT_URL = "https://places.googleapis.com/v1/places:searchText"
 FIELD_MASK = (
     "places.id,places.displayName,places.formattedAddress,"
     "places.rating,places.location,places.nationalPhoneNumber"
@@ -35,13 +36,20 @@ def _haversine_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
 
 
 class ClinicService:
-    async def nearby(self, lat: float, lng: float, radius_m: int) -> list[ClinicResponse]:
-        """Returns nearby dentists sorted by distance, closest first.
+    async def _post_places(self, url: str, payload: dict) -> list[dict]:
+        """POSTs to a Places API (New) endpoint and returns the raw `places`
+        list. Raises ClinicServiceUnavailableError on missing key or any
+        network/API failure so callers surface a consistent 503.
 
-        Raises ClinicServiceUnavailableError if no API key is configured or
-        on any network/API failure, so callers can surface a consistent 503.
+        Every failure path logs enough to actually debug it — the HTTP status
+        and Google's response body (which carries the real reason, e.g.
+        REQUEST_DENIED / API not enabled / billing / key restriction), or the
+        network error with a traceback.
         """
+        op = url.rsplit("/", 1)[-1]  # e.g. "places:searchText"
+
         if not settings.GOOGLE_PLACES_API_KEY:
+            logger.error("clinic search (%s): GOOGLE_PLACES_API_KEY is not set", op)
             raise ClinicServiceUnavailableError()
 
         headers = {
@@ -49,41 +57,88 @@ class ClinicService:
             "X-Goog-Api-Key": settings.GOOGLE_PLACES_API_KEY,
             "X-Goog-FieldMask": FIELD_MASK,
         }
-        payload = {
-            "includedTypes": ["dentist"],
-            "maxResultCount": 20,
-            "locationRestriction": {
-                "circle": {
-                    "center": {"latitude": lat, "longitude": lng},
-                    "radius": min(radius_m, MAX_RADIUS_M),
-                }
-            },
-        }
+        logger.debug("clinic search (%s): request payload=%s", op, payload)
 
         try:
             async with httpx.AsyncClient(timeout=15.0) as client:
-                response = await client.post(SEARCH_NEARBY_URL, headers=headers, json=payload)
-                response.raise_for_status()
-                places = response.json().get("places", [])
+                response = await client.post(url, headers=headers, json=payload)
+        except httpx.HTTPError:
+            logger.exception("clinic search (%s): network error calling Google Places", op)
+            raise ClinicServiceUnavailableError()
 
-                clinics = []
-                for place in places:
-                    location = place.get("location", {})
-                    place_lat, place_lng = location.get("latitude"), location.get("longitude")
-                    if place_lat is None or place_lng is None:
-                        continue
-                    clinics.append(
-                        ClinicResponse(
-                            place_id=place["id"],
-                            name=place.get("displayName", {}).get("text", "Unknown clinic"),
-                            address=place.get("formattedAddress"),
-                            rating=place.get("rating"),
-                            distance_km=round(_haversine_km(lat, lng, place_lat, place_lng), 2),
-                            phone=place.get("nationalPhoneNumber"),
-                        )
-                    )
-                clinics.sort(key=lambda c: c.distance_km)
-                return clinics
-        except (httpx.HTTPError, KeyError, ValueError) as exc:
-            logger.warning("Google Places service unavailable: %s", exc)
-            raise ClinicServiceUnavailableError() from exc
+        if response.status_code >= 400:
+            # Google puts { "error": { "status": ..., "message": ... } } here.
+            logger.error(
+                "clinic search (%s): Google Places returned HTTP %s — body: %s",
+                op,
+                response.status_code,
+                response.text[:2000],
+            )
+            raise ClinicServiceUnavailableError()
+
+        try:
+            body = response.json()
+        except ValueError:
+            logger.exception(
+                "clinic search (%s): Google Places returned non-JSON (HTTP %s) — body: %s",
+                op,
+                response.status_code,
+                response.text[:2000],
+            )
+            raise ClinicServiceUnavailableError()
+
+        places = body.get("places", [])
+        logger.info("clinic search (%s): %d result(s)", op, len(places))
+        return places
+
+    def _to_clinic(self, place: dict, origin: tuple[float, float] | None) -> ClinicResponse | None:
+        location = place.get("location", {})
+        place_lat, place_lng = location.get("latitude"), location.get("longitude")
+        distance = None
+        if origin is not None and place_lat is not None and place_lng is not None:
+            distance = round(_haversine_km(origin[0], origin[1], place_lat, place_lng), 2)
+        place_id = place.get("id")
+        if not place_id:
+            return None
+        return ClinicResponse(
+            place_id=place_id,
+            name=place.get("displayName", {}).get("text", "Unknown clinic"),
+            address=place.get("formattedAddress"),
+            rating=place.get("rating"),
+            distance_km=distance,
+            phone=place.get("nationalPhoneNumber"),
+        )
+
+    async def nearby(self, lat: float, lng: float, radius_m: int) -> list[ClinicResponse]:
+        """Returns dentists near a coordinate, sorted by distance (closest first)."""
+        places = await self._post_places(
+            SEARCH_NEARBY_URL,
+            {
+                "includedTypes": ["dentist"],
+                "maxResultCount": 20,
+                "locationRestriction": {
+                    "circle": {
+                        "center": {"latitude": lat, "longitude": lng},
+                        "radius": min(radius_m, MAX_RADIUS_M),
+                    }
+                },
+            },
+        )
+        clinics = [c for p in places if (c := self._to_clinic(p, (lat, lng)))]
+        clinics.sort(key=lambda c: c.distance_km if c.distance_km is not None else float("inf"))
+        return clinics
+
+    async def search_text(self, query: str) -> list[ClinicResponse]:
+        """Returns dentists matching a free-text area/place query — the
+        fallback for when the browser won't give a precise location. Results
+        keep Google's relevance order and carry no distance (no user origin).
+        """
+        places = await self._post_places(
+            SEARCH_TEXT_URL,
+            {
+                "textQuery": f"dentist in {query}",
+                "includedType": "dentist",
+                "maxResultCount": 20,
+            },
+        )
+        return [c for p in places if (c := self._to_clinic(p, None))]

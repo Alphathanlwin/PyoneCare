@@ -26,3 +26,22 @@ async def get_nearby_clinics(
         data={"items": [c.model_dump() for c in clinics]},
         message="Nearby clinics retrieved successfully.",
     )
+
+
+@router.get("/search")
+async def search_clinics(
+    q: str = Query(..., min_length=2, max_length=120),
+    current_user: User = Depends(get_current_user),
+    clinic_service: ClinicService = Depends(ClinicService),
+):
+    """Area/place-name search — the fallback for when the browser blocks or
+    denies precise geolocation."""
+    try:
+        clinics = await clinic_service.search_text(q)
+    except ClinicServiceUnavailableError:
+        raise ClinicServiceUnavailableException()
+
+    return success_response(
+        data={"items": [c.model_dump() for c in clinics]},
+        message="Clinics retrieved successfully.",
+    )

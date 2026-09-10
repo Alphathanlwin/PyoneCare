@@ -111,14 +111,3 @@ class ClinicServiceUnavailableException(HTTPException):
                 "message": "Nearby clinic search is temporarily unavailable.",
             },
         )
-
-
-class InvalidLinkTokenException(HTTPException):
-    def __init__(self) -> None:
-        super().__init__(
-            status_code=400,
-            detail={
-                "code": "INVALID_LINK_TOKEN",
-                "message": "This Telegram link is invalid or has expired.",
-            },
-        )

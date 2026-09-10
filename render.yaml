@@ -48,12 +48,6 @@ services:
         sync: false
       - key: LLM_API_URL
         sync: false
-      - key: TELEGRAM_BOT_TOKEN
-        sync: false
-      - key: TELEGRAM_BOT_USERNAME
-        sync: false
-      - key: TELEGRAM_WEBHOOK_SECRET
-        sync: false
       - key: GOOGLE_PLACES_API_KEY
         sync: false
 

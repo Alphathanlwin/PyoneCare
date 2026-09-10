@@ -61,6 +61,10 @@ export default defineConfig(async () => ({
     // Bind to 0.0.0.0 so the dev server is reachable from other devices on
     // the same Wi-Fi (e.g. testing the camera flow on an actual phone).
     host: true,
+    // Fail loudly if 5173 is taken instead of silently moving to 5174 — the
+    // "open this on your phone" URL has to stay predictable.
+    port: 5173,
+    strictPort: true,
     https: useHttps ? await generateDevCert() : undefined,
     // Proxy API calls to the backend server-side, so the browser only ever
     // talks to this https origin (no CORS, no https-page-calling-http

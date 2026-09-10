@@ -499,6 +499,12 @@ button {
   object-fit: contain;
 }
 
+:root[data-theme="dark"] .navbar-brand-icon {
+  padding: 3px;
+  background: #ffffff;
+  border-radius: var(--radius-full);
+}
+
 .navbar-nav {
   display: flex;
   align-items: center;
@@ -2885,6 +2891,20 @@ video.live-camera-video {
   gap: var(--spacing-sm);
 }
 
+.nearby-clinics-area {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+
+.nearby-clinics-area .form-input {
+  flex: 1 1 auto;
+}
+
+.nearby-clinics-area .btn-secondary {
+  flex: 0 0 auto;
+}
+
 .nearby-clinics {
   background: var(--color-surface);
   border: var(--card-border-width) solid var(--color-border);
@@ -2986,54 +3006,4 @@ video.live-camera-video {
 
 .clinic-card-phone:hover {
   color: var(--color-primary);
-}
-
-/* Telegram account linking (Phase 5) */
-.telegram-link-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: 1.5rem;
-  margin-top: var(--spacing-lg);
-  box-shadow: var(--shadow-sm);
-}
-
-.telegram-link-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.telegram-link-title {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  font-size: 1.125rem;
-  font-weight: 600;
-  font-family: var(--font-heading);
-}
-
-.telegram-link-badge {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--color-success);
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  border-radius: var(--radius-full);
-  padding: 0.1875rem 0.625rem;
-}
-
-.telegram-link-actions {
-  display: flex;
-  gap: var(--spacing-md);
-  flex-wrap: wrap;
-}
-
-.telegram-link-btn {
-  text-decoration: none;
-  padding: 0.625rem 1.25rem;
-  font-size: 0.875rem;
 }

@@ -11,8 +11,17 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from config import settings
-from routers import assessment, auth, chat, clinic, telegram
+from routers import assessment, auth, chat, clinic
 from utils.response import error_response
+
+# uvicorn only configures its own loggers, so the app's `logging.getLogger(...)`
+# calls (services, exception handler) go nowhere unless the root logger has a
+# handler. Add one here so warnings/errors from the services actually show in
+# the server console. Set LOG_LEVEL=DEBUG for request-level detail.
+logging.basicConfig(
+    level=settings.LOG_LEVEL.upper(),
+    format="%(asctime)s %(levelname)-7s %(name)s: %(message)s",
+)
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +60,6 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Auth"])
 app.include_router(assessment.router, prefix="/api/v1/assessments", tags=["Assessments"])
 app.include_router(chat.router, prefix="/api/v1/chat", tags=["Chat"])
-app.include_router(telegram.router, prefix="/api/v1/telegram", tags=["Telegram"])
 app.include_router(clinic.router, prefix="/api/v1/clinics", tags=["Clinics"])
 
 

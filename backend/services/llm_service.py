@@ -57,9 +57,25 @@ class LLMService:
         try:
             async with httpx.AsyncClient(timeout=20.0) as client:
                 response = await client.post(settings.LLM_API_URL, headers=headers, json=payload)
-                response.raise_for_status()
-                body = response.json()
-                return body["choices"][0]["message"]["content"]
-        except (httpx.HTTPError, KeyError, IndexError, ValueError) as exc:
-            logger.warning("LLM service unavailable: %s", exc)
-            raise LLMServiceUnavailableError() from exc
+        except httpx.HTTPError:
+            logger.exception("LLM request failed: network error calling %s", settings.LLM_API_URL)
+            raise LLMServiceUnavailableError()
+
+        if response.status_code >= 400:
+            logger.error(
+                "LLM request failed: HTTP %s from %s (model=%s) — body: %s",
+                response.status_code,
+                settings.LLM_API_URL,
+                settings.LLM_MODEL,
+                response.text[:2000],
+            )
+            raise LLMServiceUnavailableError()
+
+        try:
+            return response.json()["choices"][0]["message"]["content"]
+        except (KeyError, IndexError, ValueError):
+            logger.exception(
+                "LLM request failed: unexpected response shape — body: %s",
+                response.text[:2000],
+            )
+            raise LLMServiceUnavailableError()
