@@ -4,6 +4,7 @@ import logging
 import httpx
 
 from config import settings
+from utils.http import UpstreamUnavailableError
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,7 @@ CV_LABEL_TO_SYMPTOM = {
 CONFIDENCE_THRESHOLD = 0.6
 
 
-class CVServiceUnavailableError(Exception):
+class CVServiceUnavailableError(UpstreamUnavailableError):
     """Raised when the HuggingFace Inference API cannot be reached or errors."""
 
 

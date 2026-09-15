@@ -4,9 +4,6 @@
 export interface SpeakOptions {
   onStart?: () => void;
   onEnd?: () => void;
-  rate?: number;
-  pitch?: number;
-  volume?: number;
 }
 
 export interface SpeechHandle {
@@ -91,7 +88,7 @@ if (typeof window !== 'undefined' && window.speechSynthesis) {
 }
 
 export function speak(text: string, options: SpeakOptions = {}): SpeechHandle {
-  const { onStart, onEnd, rate = 1, pitch = 1.05, volume = 1 } = options;
+  const { onStart, onEnd } = options;
   const hasSpeech = typeof window !== 'undefined' && 'speechSynthesis' in window;
   const duration = Math.max(900, (text || '').split(/\s+/).length * 260);
 
@@ -126,12 +123,11 @@ export function speak(text: string, options: SpeakOptions = {}): SpeechHandle {
     if (cancelled) return;
 
     safetyTimer = setTimeout(finish, duration + 2000);
-    window.speechSynthesis.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = rate;
-    utterance.pitch = pitch;
-    utterance.volume = volume;
+    utterance.rate = 1;
+    utterance.pitch = 1.05;
+    utterance.volume = 1;
     if (voice) utterance.voice = voice;
 
     utterance.onstart = () => onStart?.();

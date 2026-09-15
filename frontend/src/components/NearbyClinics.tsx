@@ -1,8 +1,10 @@
 import { useState, type FormEvent } from 'react';
 import { getNearbyClinics, searchClinics } from '../api/clinic';
-import type { ApiErrorLike, Clinic } from '../types/api';
+import { apiErrorMessage } from '../utils/apiError';
+import type { Clinic } from '../types/api';
 
-const SEARCH_RADIUS_M = 5000;
+const CLINIC_ERROR_FALLBACK =
+  'Nearby clinic search is unavailable right now — please try again later.';
 
 type SearchStatus = 'idle' | 'loading' | 'done' | 'error';
 
@@ -11,17 +13,8 @@ interface LocationErrorLike {
   message?: string;
 }
 
-function extractErrorMessage(err: unknown): string {
-  const e = err as ApiErrorLike;
-  return (
-    e.response?.data?.error?.message ||
-    e.response?.data?.detail ||
-    'Nearby clinic search is unavailable right now — please try again later.'
-  );
-}
-
 function getCurrentPosition(): Promise<GeolocationPosition> {
-  return new Promise<GeolocationPosition>((resolve, reject) => {
+    return new Promise<GeolocationPosition>((resolve, reject) => {
     if (typeof window !== 'undefined' && window.isSecureContext === false) {
       const err = new Error('insecure context') as Error & { code?: string };
       err.code = 'INSECURE_CONTEXT';
@@ -35,32 +28,9 @@ function getCurrentPosition(): Promise<GeolocationPosition> {
       return;
     }
 
-    let settled = false;
-
-    const timer = setTimeout(() => {
-      if (!settled) {
-        settled = true;
-        const err = new Error('geolocation timed out') as Error & { code?: number };
-        err.code = 3;
-        reject(err);
-      }
-    }, 15000);
-
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        if (!settled) {
-          settled = true;
-          clearTimeout(timer);
-          resolve(pos);
-        }
-      },
-      (err) => {
-        if (!settled) {
-          settled = true;
-          clearTimeout(timer);
-          reject(err);
-        }
-      },
+      resolve,
+      reject,
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 5 * 60 * 1000 },
     );
   });
@@ -108,12 +78,11 @@ function NearbyClinics() {
 
     try {
       const { latitude, longitude } = position.coords;
-      const response = await getNearbyClinics(latitude, longitude, SEARCH_RADIUS_M);
-      console.log(response);
+      const response = await getNearbyClinics(latitude, longitude);
       setClinics(response?.data?.items || []);
       setStatus('done');
     } catch (err) {
-      setError(extractErrorMessage(err));
+      setError(apiErrorMessage(err, CLINIC_ERROR_FALLBACK));
       setStatus('error');
     }
   };
@@ -132,7 +101,7 @@ function NearbyClinics() {
       setClinics(response?.data?.items || []);
       setStatus('done');
     } catch (err) {
-      setError(extractErrorMessage(err));
+      setError(apiErrorMessage(err, CLINIC_ERROR_FALLBACK));
       setStatus('error');
     }
   };

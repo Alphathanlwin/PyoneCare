@@ -1,4 +1,3 @@
-import axios, { type AxiosInstance } from 'axios';
 import type {
   ApiResponse,
   LoginData,
@@ -7,57 +6,45 @@ import type {
   User,
 } from '../types/api';
 
-// In dev this stays relative ('/api/v1') and Vite's dev server proxies /api to
-// the backend (see vite.config.ts), so it works identically via localhost or a
-// phone on the LAN. In production the frontend is a separate static site, so
-// the build injects VITE_API_BASE_URL (e.g. https://ohas-api.onrender.com/api/v1)
-// pointing at the deployed backend.
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
-const authApi: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
+function authHeaders(): Record<string, string> {
+  const token = localStorage.getItem('ohas_token');
+  return token
+    ? { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+    : { 'Content-Type': 'application/json' };
+}
+
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    headers: { ...authHeaders(), ...(init.headers || {}) },
+  });
+  const body = await res.json().catch(() => null);
+  if (res.status === 401) localStorage.removeItem('ohas_token');
+  if (!res.ok) throw { response: { data: body, status: res.status } };
+  return body as T;
+}
+
+const apiClient = {
+  get: <T>(path: string, opts: { params?: Record<string, unknown> } = {}) => {
+    const entries = Object.entries(opts.params ?? {}).map(([k, v]) => [k, String(v)]);
+    const qs = entries.length ? `?${new URLSearchParams(entries).toString()}` : '';
+    return request<T>(`${path}${qs}`, { method: 'GET' }).then((data) => ({ data }));
   },
-});
-
-// Request interceptor to add auth token
-authApi.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('ohas_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-// Response interceptor to handle errors
-authApi.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
-      // Token expired or invalid
-      localStorage.removeItem('ohas_token');
-    }
-    return Promise.reject(error);
-  }
-);
-
-export const register = async (payload: RegisterPayload): Promise<ApiResponse<User>> => {
-  const response = await authApi.post<ApiResponse<User>>('/auth/register', payload);
-  return response.data;
+  post: <T>(path: string, payload?: unknown) =>
+    request<T>(path, { method: 'POST', body: JSON.stringify(payload ?? {}) }).then((data) => ({
+      data,
+    })),
 };
 
-export const login = async (payload: LoginPayload): Promise<ApiResponse<LoginData>> => {
-  const response = await authApi.post<ApiResponse<LoginData>>('/auth/login', payload);
-  return response.data;
-};
+export const register = (payload: RegisterPayload): Promise<ApiResponse<User>> =>
+  apiClient.post<ApiResponse<User>>('/auth/register', payload).then((r) => r.data);
 
-export const getCurrentUser = async (): Promise<ApiResponse<User>> => {
-  const response = await authApi.get<ApiResponse<User>>('/users/me');
-  return response.data;
-};
+export const login = (payload: LoginPayload): Promise<ApiResponse<LoginData>> =>
+  apiClient.post<ApiResponse<LoginData>>('/auth/login', payload).then((r) => r.data);
 
-export default authApi;
+export const getCurrentUser = (): Promise<ApiResponse<User>> =>
+  apiClient.get<ApiResponse<User>>('/users/me').then((r) => r.data);
+
+export default apiClient;

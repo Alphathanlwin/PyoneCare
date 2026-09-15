@@ -1,21 +1,15 @@
 import { useState } from 'react';
 import { chatIntake } from '../api/chat';
 import { SYMPTOM_QUESTIONS } from '../data/symptomQuestions';
-import type { ApiErrorLike, SymptomMap } from '../types/api';
+import { apiErrorMessage } from '../utils/apiError';
+import type { SymptomMap } from '../types/api';
 
-const SYMPTOM_LABELS: Record<string, string> = SYMPTOM_QUESTIONS.reduce((acc, s) => {
-  acc[s.key] = s.label;
-  return acc;
-}, {} as Record<string, string>);
+const SYMPTOM_LABELS: Record<string, string> = Object.fromEntries(
+  SYMPTOM_QUESTIONS.map((s) => [s.key, s.label]),
+);
 
-function extractErrorMessage(err: unknown): string {
-  const e = err as ApiErrorLike;
-  return (
-    e.response?.data?.error?.message ||
-    e.response?.data?.detail ||
-    "Dr. Ava's AI assistant is unavailable right now — please use the toggles below instead."
-  );
-}
+const INTAKE_ERROR_FALLBACK =
+  "Dr. Ava's AI assistant is unavailable right now — please use the toggles below instead.";
 
 interface SymptomIntakeChatProps {
   onApply: (symptoms: SymptomMap) => void;
@@ -50,7 +44,7 @@ function SymptomIntakeChat({ onApply }: SymptomIntakeChatProps) {
         setText('');
       }
     } catch (err) {
-      setError(extractErrorMessage(err));
+      setError(apiErrorMessage(err, INTAKE_ERROR_FALLBACK));
     } finally {
       setLoading(false);
     }

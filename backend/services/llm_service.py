@@ -1,15 +1,11 @@
 import logging
 
-import httpx
-
 from config import settings
+from utils.http import UpstreamUnavailableError, post_json
 
 logger = logging.getLogger(__name__)
 
-
-class LLMServiceUnavailableError(Exception):
-    """Raised when the LLM API cannot be reached, errors, is unconfigured, or
-    returns a response the caller can't use."""
+LLMServiceUnavailableError = UpstreamUnavailableError
 
 
 class LLMService:
@@ -25,15 +21,10 @@ class LLMService:
         *,
         system_prompt: str,
         user_message: str,
-        history: list[dict] | None = None,
         temperature: float = 0.0,
         max_tokens: int = 500,
     ) -> str:
-        """Returns the assistant's reply text for a system + optional history + user turn.
-
-        `history` is an already-validated list of {"role", "content"} dicts
-        (prior user/assistant turns) inserted between the system prompt and the
-        latest user message so multi-turn chats keep context.
+        """Returns the assistant's reply text for a system + user turn.
 
         Raises LLMServiceUnavailableError if no API key is configured or on
         any network/API/parsing failure, so callers can surface a consistent
@@ -43,10 +34,10 @@ class LLMService:
             raise LLMServiceUnavailableError()
 
         headers = {"Authorization": f"Bearer {settings.LLM_API_KEY}"}
-        messages = [{"role": "system", "content": system_prompt}]
-        if history:
-            messages.extend(history)
-        messages.append({"role": "user", "content": user_message})
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_message},
+        ]
         payload = {
             "model": settings.LLM_MODEL,
             "temperature": temperature,
@@ -55,10 +46,15 @@ class LLMService:
         }
 
         try:
-            async with httpx.AsyncClient(timeout=20.0) as client:
-                response = await client.post(settings.LLM_API_URL, headers=headers, json=payload)
-        except httpx.HTTPError:
-            logger.exception("LLM request failed: network error calling %s", settings.LLM_API_URL)
+            response = await post_json(
+                settings.LLM_API_URL,
+                headers=headers,
+                payload=payload,
+                timeout=20.0,
+                logger=logger,
+                op="LLM request",
+            )
+        except UpstreamUnavailableError:
             raise LLMServiceUnavailableError()
 
         if response.status_code >= 400:

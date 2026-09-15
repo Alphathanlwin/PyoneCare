@@ -177,7 +177,6 @@ export const SYMPTOM_STEPS: SymptomStep[] = [
 
 export const SYMPTOM_QUESTIONS: SymptomQuestion[] = SYMPTOM_STEPS.flatMap((step) => step.symptoms);
 
-export const initialSymptoms: SymptomMap = SYMPTOM_QUESTIONS.reduce((acc, s) => {
-  acc[s.key] = false;
-  return acc;
-}, {} as SymptomMap);
+export const initialSymptoms: SymptomMap = Object.fromEntries(
+  SYMPTOM_QUESTIONS.map((s) => [s.key, false]),
+);

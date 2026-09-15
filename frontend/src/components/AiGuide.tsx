@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import useTalkingMouth from '../hooks/useTalkingMouth';
 import { speak, stopSpeaking, type SpeechHandle } from '../utils/speech';
 import type { AiGuideState } from '../types/ui';
 import avaWelcome from '../assets/ava/ava-welcome.png';
@@ -31,8 +30,6 @@ const POSE_GLOW: Record<AiGuideState, string> = {
 interface AiGuideProps {
   state?: AiGuideState;
   caption?: string;
-  autoSpeak?: boolean;
-  onSpeakStart?: () => void;
   onSpeakEnd?: () => void;
   size?: 'sm' | 'md' | 'lg';
   layout?: 'stage' | 'float';
@@ -43,24 +40,25 @@ interface AiGuideProps {
 function AiGuide({
   state = 'idle',
   caption,
-  autoSpeak = true,
-  onSpeakStart,
   onSpeakEnd,
   size = 'lg',
   layout = 'stage',
 }: AiGuideProps) {
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const frame = useTalkingMouth(isSpeaking);
+  const [frame, setFrame] = useState(0);
   const cancelRef = useRef<SpeechHandle | null>(null);
 
   useEffect(() => {
-    if (!autoSpeak || !caption) return undefined;
+    if (!isSpeaking) return undefined;
+    const id = setInterval(() => setFrame((f) => (f + 1) % 3), 140);
+    return () => clearInterval(id);
+  }, [isSpeaking]);
+
+  useEffect(() => {
+    if (!caption) return undefined;
 
     cancelRef.current = speak(caption, {
-      onStart: () => {
-        setIsSpeaking(true);
-        onSpeakStart?.();
-      },
+      onStart: () => setIsSpeaking(true),
       onEnd: () => {
         setIsSpeaking(false);
         onSpeakEnd?.();
@@ -72,7 +70,7 @@ function AiGuide({
       stopSpeaking();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [caption, autoSpeak]);
+  }, [caption]);
 
   const image = POSE_IMAGES[state] || POSE_IMAGES.idle;
   const glow = POSE_GLOW[state] || POSE_GLOW.idle;

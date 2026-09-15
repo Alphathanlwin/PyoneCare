@@ -1,17 +1,11 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { chatExplain } from '../api/chat';
 import { speak, stopSpeaking, type SpeechHandle } from '../utils/speech';
-import type { ApiErrorLike } from '../types/api';
+import { apiErrorMessage } from '../utils/apiError';
 import type { ChatMessage } from '../types/ui';
 
-function extractErrorMessage(err: unknown): string {
-  const e = err as ApiErrorLike;
-  return (
-    e.response?.data?.error?.message ||
-    e.response?.data?.detail ||
-    "Dr. Ava's chat assistant is unavailable right now — please try again later."
-  );
-}
+const CHAT_ERROR_FALLBACK =
+  "Dr. Ava's chat assistant is unavailable right now — please try again later.";
 
 interface ChatPanelProps {
   assessmentId: string;
@@ -70,7 +64,7 @@ function ChatPanel({ assessmentId }: ChatPanelProps) {
         return next;
       });
     } catch (err) {
-      setError(extractErrorMessage(err));
+      setError(apiErrorMessage(err, CHAT_ERROR_FALLBACK));
     } finally {
       setLoading(false);
     }

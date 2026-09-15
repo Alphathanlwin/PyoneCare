@@ -65,15 +65,6 @@ class DiagnosisResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class AssessmentSummaryResponse(BaseModel):
-    id: uuid.UUID
-    created_at: datetime
-    risk_level: RiskLevel
-    conditions_detected: list[Condition]
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 class AssessmentResponse(BaseModel):
     id: uuid.UUID
     created_at: datetime

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getAssessments } from '../api/assessment';
 import RiskBadge from '../components/RiskBadge';
+import { formatDate } from '../utils/format';
 import type { Assessment } from '../types/api';
 
 const RISK_LEVELS: { level: string; description: string }[] = [
@@ -10,9 +11,6 @@ const RISK_LEVELS: { level: string; description: string }[] = [
   { level: 'MEDIUM', description: 'Possible early-stage condition — see a dentist within 1 month.' },
   { level: 'HIGH', description: 'Likely active condition — see a dentist within 1 week.' },
 ];
-
-const formatDate = (isoString: string): string =>
-  new Date(isoString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
 const formatTime = (isoString: string): string =>
   new Date(isoString).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });

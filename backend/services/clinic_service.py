@@ -1,10 +1,9 @@
 import logging
 import math
 
-import httpx
-
 from config import settings
 from schemas.clinic import ClinicResponse
+from utils.http import UpstreamUnavailableError, post_json
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +21,7 @@ FIELD_MASK = (
 MAX_RADIUS_M = 50000
 
 
-class ClinicServiceUnavailableError(Exception):
+class ClinicServiceUnavailableError(UpstreamUnavailableError):
     """Raised when the Google Places API cannot be reached, errors, or is unconfigured."""
 
 
@@ -60,10 +59,10 @@ class ClinicService:
         logger.debug("clinic search (%s): request payload=%s", op, payload)
 
         try:
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                response = await client.post(url, headers=headers, json=payload)
-        except httpx.HTTPError:
-            logger.exception("clinic search (%s): network error calling Google Places", op)
+            response = await post_json(
+                url, headers=headers, payload=payload, timeout=15.0, logger=logger, op=f"clinic search ({op})"
+            )
+        except UpstreamUnavailableError:
             raise ClinicServiceUnavailableError()
 
         if response.status_code >= 400:

@@ -10,7 +10,3 @@ class ClinicResponse(BaseModel):
     # measure from); a number when it came from a coordinate-based nearby search.
     distance_km: float | None = None
     phone: str | None
-
-
-class NearbyClinicsResponse(BaseModel):
-    items: list[ClinicResponse]

@@ -34,8 +34,8 @@ def validate_image(image_bytes: bytes) -> Image.Image:
         raise ImageTooLargeException()
 
     try:
-        Image.open(io.BytesIO(image_bytes)).verify()
-        image = Image.open(io.BytesIO(image_bytes))  # re-open: verify() consumes the file
+        image = Image.open(io.BytesIO(image_bytes))
+        image.load()
     except (UnidentifiedImageError, OSError) as exc:
         raise InvalidImageFormatException() from exc
 

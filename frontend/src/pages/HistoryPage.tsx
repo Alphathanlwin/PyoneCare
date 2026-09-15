@@ -2,12 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getAssessments } from '../api/assessment';
 import RiskBadge from '../components/RiskBadge';
+import { formatDate } from '../utils/format';
 import type { ApiErrorLike, Assessment } from '../types/api';
 
 const PAGE_SIZE = 5;
-
-const formatDate = (isoString: string): string =>
-  new Date(isoString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
 function HistoryPage() {
   const [page, setPage] = useState(1);

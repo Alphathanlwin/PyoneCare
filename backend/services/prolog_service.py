@@ -13,12 +13,6 @@ QUERY_TIMEOUT_SECONDS = 10
 RISK_LEVELS = {"LOW", "MEDIUM", "HIGH"}
 
 
-def _prolog_path_atom(path: Path) -> str:
-    """Formats a filesystem path as a single-quoted Prolog atom (forward slashes)."""
-    escaped = str(path.resolve()).replace("\\", "/").replace("'", "\\'")
-    return f"'{escaped}'"
-
-
 class PrologService:
     """Bridges to SWI-Prolog via subprocess (per architecture.md's documented
     Windows-safe fallback — pyswip's embedded engine is flaky on Windows and
@@ -88,10 +82,11 @@ class PrologService:
         # SWI-Prolog on Windows otherwise reads source files and writes
         # stdout using the system codepage (e.g. cp1252), silently mangling
         # non-ASCII characters like the em dashes in knowledge_base.pl.
+        kb = str(KB_PATH.resolve()).replace("\\", "/").replace("'", "\\'")
         lines = [
             ":- set_prolog_flag(encoding, utf8).",
             ":- set_stream(user_output, encoding(utf8)).",
-            f":- consult({_prolog_path_atom(KB_PATH)}).",
+            f":- consult('{kb}').",
         ]
         lines += [f"symptom({key})." for key in active_symptoms]
         lines += [

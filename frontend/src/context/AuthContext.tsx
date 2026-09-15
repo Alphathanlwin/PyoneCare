@@ -7,20 +7,12 @@ import {
   useState,
   useEffect,
   useCallback,
-  type Dispatch,
   type ReactNode,
-  type SetStateAction,
 } from 'react';
-import { jwtDecode } from 'jwt-decode';
 import type { User } from '../types/api';
 
 interface TokenClaims {
   sub: string;
-  exp: number;
-}
-
-interface DecodedToken {
-  id: string;
   exp: number;
 }
 
@@ -31,41 +23,29 @@ export interface AuthContextValue {
   isAuthenticated: boolean;
   login: (accessToken: string, userData: User) => void;
   logout: () => void;
-  checkAuth: () => boolean;
-  setUser: Dispatch<SetStateAction<User | null>>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 const TOKEN_KEY = 'ohas_token';
 
+function parseClaims(value: string): TokenClaims | null {
+  try {
+    return JSON.parse(atob(value.split('.')[1])) as TokenClaims;
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const decodeToken = useCallback((value: string): DecodedToken | null => {
-    try {
-      const decoded = jwtDecode<TokenClaims>(value);
-      return {
-        id: decoded.sub,
-        exp: decoded.exp,
-      };
-    } catch {
-      return null;
-    }
-  }, []);
-
-  const isTokenValid = useCallback((value: string | null): boolean => {
-    if (!value) return false;
-
-    try {
-      const decoded = jwtDecode<TokenClaims>(value);
-      const now = Date.now() / 1000;
-      return decoded.exp > now;
-    } catch {
-      return false;
-    }
+  const logout = useCallback(() => {
+    localStorage.removeItem(TOKEN_KEY);
+    setToken(null);
+    setUser(null);
   }, []);
 
   const login = useCallback((accessToken: string, userData: User) => {
@@ -74,34 +54,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(userData);
   }, []);
 
-  const logout = useCallback(() => {
-    localStorage.removeItem(TOKEN_KEY);
-    setToken(null);
-    setUser(null);
-  }, []);
-
-  const checkAuth = useCallback((): boolean => {
-    const storedToken = localStorage.getItem(TOKEN_KEY);
-
-    if (storedToken && isTokenValid(storedToken)) {
-      const decoded = decodeToken(storedToken);
-      if (decoded) {
-        setToken(storedToken);
-        setUser({ id: decoded.id });
-        return true;
-      }
-    }
-
-    logout();
-    return false;
-  }, [decodeToken, isTokenValid, logout]);
-
   useEffect(() => {
     // One-time auth bootstrap from localStorage on mount.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    checkAuth();
+    const stored = localStorage.getItem(TOKEN_KEY);
+    const claims = stored ? parseClaims(stored) : null;
+    if (stored && claims && claims.exp > Date.now() / 1000) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setToken(stored);
+      setUser({ id: claims.sub });
+    } else if (stored) {
+      localStorage.removeItem(TOKEN_KEY);
+    }
     setLoading(false);
-  }, [checkAuth]);
+  }, []);
 
   const value: AuthContextValue = {
     user,
@@ -110,8 +75,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: !!token && !!user,
     login,
     logout,
-    checkAuth,
-    setUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

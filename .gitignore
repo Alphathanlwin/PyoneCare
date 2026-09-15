@@ -23,3 +23,8 @@ Thumbs.db
 # Uploads
 backend/uploads/*
 !backend/uploads/.gitkeep
+
+# Local artifacts (never commit)
+backend/test.db
+backend/pytest_history.log
+*.log

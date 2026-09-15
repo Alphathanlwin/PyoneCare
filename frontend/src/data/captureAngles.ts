@@ -38,7 +38,6 @@ export const CAPTURE_ANGLES: CaptureAngle[] = [
 
 export type PhotoMap = Record<CaptureAngleId, string | null>;
 
-export const initialPhotos: PhotoMap = CAPTURE_ANGLES.reduce((acc, a) => {
-  acc[a.id] = null;
-  return acc;
-}, {} as PhotoMap);
+export const initialPhotos: PhotoMap = Object.fromEntries(
+  CAPTURE_ANGLES.map((a) => [a.id, null]),
+) as PhotoMap;
