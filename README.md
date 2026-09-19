@@ -1,4 +1,4 @@
-# PyoneCare(Oral Health Advisory and Triage tool)
+# PyoneCare(Ai-powered Oral Health Advisory and Triage tool)
 
 A full-stack oral health triage application that combines computer vision, a Prolog-based expert system, and LLM-grounded chat to help patients assess dental conditions and locate nearby clinics.
 
