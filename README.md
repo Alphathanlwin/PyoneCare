@@ -100,7 +100,7 @@ A full-stack oral health triage application that combines computer vision, a Pro
 │   └── requirements.txt
 ├── frontend/
 │   ├── src/
-│   │   ├── api/                # Axios client modules (auth, assessment, chat, clinic)
+│   │   ├── api/                # Fetch-based API modules (auth, assessment, chat, clinic)
 │   │   ├── context/            # AuthContext, ThemeContext, ToastContext
 │   │   ├── pages/              # 7 pages: Login, Register, Dashboard, History, NewAssessment, LiveScreening, Result
 │   │   ├── components/         # 17 components: AiGuide, GuidedCapture, ChatPanel, NearbyClinics, etc.
@@ -108,7 +108,7 @@ A full-stack oral health triage application that combines computer vision, a Pro
 │   │   ├── hooks/              # useTalkingMouth
 │   │   ├── types/              # TypeScript type definitions
 │   │   └── utils/              # Speech synthesis, result summary
-│   ├── vite.config.ts          # HTTPS dev proxy, self-signed cert generation
+│   ├── vite.config.ts          # Dev server host/port + /api proxy config
 │   └── package.json
 ├── context-kit/                # Architecture, API, schema, and build documentation
 ├── render.yaml                 # Render Blueprint (Docker backend + static frontend)
@@ -159,11 +159,13 @@ GOOGLE_PLACES_API_KEY=AIza<your-key>
 LOG_LEVEL=INFO
 ```
 
-Create `frontend/.env`:
+Create `frontend/.env` only if you want to override the default API base URL:
 
 ```env
 VITE_API_BASE_URL=http://localhost:8000/api/v1
 ```
+
+If `VITE_API_BASE_URL` is unset, frontend API calls default to `/api/v1` (see `frontend/src/api/auth.ts`) and use the Vite dev proxy to reach `http://localhost:8000` (see `frontend/vite.config.ts`).
 
 ### Run Locally
 
@@ -180,12 +182,14 @@ npm run dev
 
 Frontend: `http://localhost:5173` (proxies `/api` to port 8000)
 
-For phone/LAN testing with camera and geolocation:
+For LAN testing from another device:
 
 ```powershell
-$env:HTTPS=1; npm run dev
-# Then open https://<your-lan-ip>:5173
+npm run dev
+# Then open http://<your-lan-ip>:5173
 ```
+
+Note: `frontend/vite.config.ts` currently enables LAN hosting and API proxying, but does not enable HTTPS. Camera/geolocation permissions on mobile browsers may require a secure context (`https://`), so localhost testing is the most reliable default in this repo.
 
 ## API
 
@@ -243,9 +247,9 @@ Why: Users shouldn't be blocked from triage because an ML model endpoint is down
 Decision: Assessment-grounded prompting — the LLM system prompt contains only the assessment's own diagnosis data.
 Why: Clinical accuracy matters. The LLM explains and answers questions about what was already determined, not what it guesses.
 
-**Problem: Camera access requires HTTPS on non-localhost origins**
-Decision: Dev HTTPS via `selfsigned` cert generation in Vite config, with automatic LAN IP detection.
-Why: Camera and geolocation require secure contexts in modern browsers. A self-signed cert is sufficient for development and LAN testing.
+**Problem: Camera access on non-localhost dev origins is browser-restricted**
+Decision: Keep the current Vite setup simple (`host: true`, strict port 5173, `/api` proxy to backend), and document that secure-context features are most reliable on localhost unless HTTPS is explicitly configured.
+Why: The repository's `vite.config.ts` currently configures LAN hosting and API proxying, but no HTTPS certificate setup. This keeps local setup friction low while matching actual runtime behavior.
 
 ## Future Improvements
 

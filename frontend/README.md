@@ -1,16 +1,30 @@
-# React + Vite
+# Frontend (React + Vite)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the OHAS frontend app.
 
-Currently, two official plugins are available:
+## Scripts
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+From `/frontend`:
 
-## React Compiler
+- `npm run dev` — start Vite dev server on port `5173`
+- `npm run build` — run TypeScript project build (`tsc -b`) and Vite production build
+- `npm run typecheck` — run TypeScript project checks (`tsc -b`)
+- `npm run lint` — run ESLint
+- `npm run preview` — preview built assets
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## API base URL behavior
 
-## Expanding the ESLint configuration
+API calls use:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- `VITE_API_BASE_URL` if set
+- otherwise default to `/api/v1` (`src/api/auth.ts`)
+
+In development, `vite.config.ts` proxies `/api` to `http://localhost:8000`.
+
+## Dev server behavior
+
+`vite.config.ts` is configured to:
+
+- bind to LAN (`host: true`)
+- stay on `5173` (`strictPort: true`)
+- proxy backend API calls through `/api`
